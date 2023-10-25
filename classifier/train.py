@@ -113,7 +113,9 @@ class TrainClassifier:
         writer : SummaryWriter
             Tensorboard log writer
         """
-        criterion = nn.CrossEntropyLoss()
+        class_sample_counts = torch.tensor(train_loader.dataset.class_sample_counts).to(device)
+        class_weights = class_sample_counts.max() / class_sample_counts 
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
         model.train()
 
         lr_scheduler_params = lr_scheduler_warmup.state_dict()

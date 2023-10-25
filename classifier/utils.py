@@ -115,7 +115,7 @@ def build_model(
     checkpoint: str = None,
     pretrained: bool = False,
     freezed: bool = False,
-    ff: bool = False,
+    ff: bool = True,
 ) -> nn.Module:
     """
     Build modela and load checkpoint
@@ -135,34 +135,18 @@ def build_model(
     freezed : false
         Freeze model layers
     """
-    models = {
-        "LeNet": LeNet(num_classes=num_classes, ff=ff),
-        "ResNet18": ResNet(num_classes=num_classes, restype="ResNet18", pretrained=pretrained, freezed=freezed, ff=ff),
-        "ResNext50": ResNet(
-            num_classes=num_classes, restype="ResNext50", pretrained=pretrained, freezed=freezed, ff=ff
-        ),
-        "ResNext101": ResNet(
-            num_classes=num_classes, restype="ResNext101", pretrained=pretrained, freezed=freezed, ff=ff
-        ),
-        "ResNet152": ResNet(
-            num_classes=num_classes, restype="ResNet152", pretrained=pretrained, freezed=freezed, ff=ff
-        ),
-        "MobileNetV3_large": MobileNetV3(
+    model = MobileNetV3(
             num_classes=num_classes, size="large", pretrained=pretrained, freezed=freezed, ff=ff
-        ),
-        "MobileNetV3_small": MobileNetV3(
-            num_classes=num_classes, size="small", pretrained=pretrained, freezed=freezed, ff=ff
-        ),
-        "Vitb32": Vit(num_classes=num_classes, pretrained=pretrained, freezed=freezed, ff=ff),
-    }
-
-    model = models[model_name]
+        )
 
     if checkpoint is not None:
         checkpoint = os.path.expanduser(checkpoint)
         if os.path.exists(checkpoint):
             checkpoint = torch.load(checkpoint, map_location=torch.device(device))["state_dict"]
-            model.load_state_dict(checkpoint)
+            model_dict = model.state_dict()
+            pretrained_dict = {k: v for k, v in checkpoint.items() if k in model_dict and "gesture_classifier.3" not in k}
+            model_dict.update(pretrained_dict) 
+            model.load_state_dict(model_dict, strict=False)
 
     model.to(device)
     return model

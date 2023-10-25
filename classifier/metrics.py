@@ -44,14 +44,14 @@ def get_metrics(
     num_classes = conf.num_classes[target]
     predicts_labels = torch.argmax(predicts, dim=1)
     scores = {
-        "accuracy": accuracy(predicts_labels, targets, average=average, num_classes=num_classes),
-        "f1_score": f1_score(predicts_labels, targets, average=average, num_classes=num_classes),
-        "precision": precision(predicts_labels, targets, average=average, num_classes=num_classes),
-        "recall": recall(predicts_labels, targets, average=average, num_classes=num_classes),
+        "accuracy": accuracy(predicts_labels, targets, task='multiclass', average=average, num_classes=num_classes),
+        "f1_score": f1_score(predicts_labels, targets, task='multiclass', average=average, num_classes=num_classes),
+        "precision": precision(predicts_labels, targets, task='multiclass', average=average, num_classes=num_classes),
+        "recall": recall(predicts_labels, targets, task='multiclass', average=average, num_classes=num_classes),
     }
 
     if mode == "test":
-        scores["roc_auc"] = auroc(predicts, targets, average=average, num_classes=num_classes)
+        scores["roc_auc"] = auroc(predicts, targets, task='multiclass', average=average, num_classes=num_classes)
 
     needed_scores = {}
     for metric in metrics:
@@ -63,10 +63,10 @@ def get_metrics(
         else:
             class_names = conf.dataset.targets
 
-        cm = confusion_matrix(predicts, targets, num_classes)
+        cm = confusion_matrix(predicts, targets, task='multiclass', threshold=0.5, num_classes=num_classes)
         df_cm = pd.DataFrame(cm, index=[i for i in class_names], columns=[i for i in class_names])
 
-        plt.figure(figsize=(16, 12))
-        hm = sns.heatmap(df_cm, annot=True, fmt=".5g", cmap="YlGnBu").get_figure()
-        writer.add_figure(f"Confusion matrix for {target}", hm, epoch)
+        # plt.figure(figsize=(16, 12))
+        # hm = sns.heatmap(df_cm, annot=True, fmt=".5g", cmap="YlGnBu").get_figure()
+        # writer.add_figure(f"Confusion matrix for {target}", hm, epoch)
     return needed_scores
